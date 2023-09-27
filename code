@@ -1,0 +1,185 @@
+import heapq
+import os
+
+class HuffmanCoding:
+def __init__(self):
+self.heap = []
+self.codes = {}
+self.reverse_mapping = {}
+
+class HeapNode:
+def __init__(self, char, freq):
+self.char = char
+self.freq = freq
+self.left = None
+self.right = None
+
+def __lt__(self, other):
+return self.freq &lt; other.freq
+
+def __eq__(self, other):
+if not isinstance(other, HuffmanCoding.HeapNode):
+return False
+return self.freq == other.freq
+
+def make_frequency_dict(self, text):
+frequency = {}
+for character in text:
+if character not in frequency:
+
+frequency[character] = 0
+frequency[character] += 1
+return frequency
+
+def make_heap(self, frequency):
+for key in frequency:
+node = self.HeapNode(key, frequency[key])
+heapq.heappush(self.heap, node)
+
+def merge_nodes(self):
+while len(self.heap) &gt; 1:
+node1 = heapq.heappop(self.heap)
+node2 = heapq.heappop(self.heap)
+
+merged = self.HeapNode(None, node1.freq + node2.freq)
+merged.left = node1
+merged.right = node2
+
+heapq.heappush(self.heap, merged)
+
+def codes_generate(self, root, current_code):
+if root is None:
+return
+
+if root.char is not None:
+self.codes[root.char] = current_code
+self.reverse_mapping[current_code] = root.char
+print(f&quot;{root.char}: {current_code}&quot;) # Print the code for each character
+return
+
+self.codes_generate(root.left, current_code + &quot;0&quot;)
+self.codes_generate(root.right, current_code + &quot;1&quot;)
+
+def make_codes(self):
+root = heapq.heappop(self.heap)
+current_code = &quot;&quot;
+self.codes_generate(root, current_code)
+
+def encode_text(self, text):
+encoded_text = &quot;&quot;
+for character in text:
+encoded_text += self.codes[character]
+return encoded_text
+
+def pad_encoded_text(self, encoded_text):
+extra_padding = 8 - len(encoded_text) % 8
+for i in range(extra_padding):
+encoded_text += &quot;0&quot;
+
+padded_info = &quot;{0:08b}&quot;.format(extra_padding)
+encoded_text = padded_info + encoded_text
+return encoded_text
+
+def byte_array(self, padded_encoded_text):
+if len(padded_encoded_text) % 8 != 0:
+print(&quot;Encoded text not padded properly&quot;)
+exit(0)
+
+b = bytearray()
+for i in range(0, len(padded_encoded_text), 8):
+byte = padded_encoded_text[i:i+8]
+b.append(int(byte, 2))
+return b
+
+def compress(self, path):
+filename, file_extension = os.path.splitext(path)
+output_path = filename + &quot;.bin&quot;
+
+with open(path, &#39;r&#39;) as file, open(output_path, &#39;wb&#39;) as output:
+text = file.read()
+text = text.rstrip()
+
+frequency = self.make_frequency_dict(text)
+self.make_heap(frequency)
+self.merge_nodes()
+self.make_codes()
+encoded_text = self.encode_text(text)
+padded_encoded_text = self.pad_encoded_text(encoded_text)
+
+b = self.get_byte_array(padded_encoded_text)
+output.write(bytes(b))
+
+print(&quot;Compressed&quot;)
+return output_path
+
+def decompress(self, path):
+filename, file_extension = os.path.splitext(path)
+
+output_path = filename + &quot;_decompressed&quot; + &quot;.txt&quot;
+
+with open(path, &#39;rb&#39;) as file, open(output_path, &#39;w&#39;) as output:
+bit_string = &quot;&quot;
+
+byte = file.read(1)
+while len(byte) &gt; 0:
+byte = ord(byte)
+bits = bin(byte)[2:].rjust(8, &#39;0&#39;)
+bit_string += bits
+byte = file.read(1)
+
+encoded_text = self.remove_padding(bit_string)
+
+decoded_text = self.decode_text(encoded_text)
+
+output.write(decoded_text)
+
+print(&quot;Decompressed&quot;)
+return output_path
+
+def remove_padding(self, padded_encoded_text):
+padded_info = padded_encoded_text[:8]
+extra_padding = int(padded_info, 2)
+
+padded_encoded_text = padded_encoded_text[8:]
+encoded_text = padded_encoded_text[:-1*extra_padding]
+
+return encoded_text
+
+def decode_text(self, encoded_text):
+current_code = &quot;&quot;
+decoded_text = &quot;&quot;
+
+for bit in encoded_text:
+current_code += bit
+if current_code in self.reverse_mapping:
+character = self.reverse_mapping[current_code]
+decoded_text += character
+current_code = &quot;&quot;
+
+return decoded_text
+
+huffman = HuffmanCoding()
+
+# Read text file from user
+input_path = input(&quot;Enter the path of the text file to compress: &quot;)
+compressed_file = huffman.compress(input_path)
+
+# The encoding table will be printed to the console during the compression process
+
+with open(input_path, &quot;r&quot;) as file:
+text = file.read()
+frequency = {}
+for char in text:
+if char not in frequency:
+frequency[char] = 0
+
+frequency[char] += 1
+
+# Print frequency table
+print(&quot;Frequency table for characters:&quot;)
+for char, freq in frequency.items():
+print(char, freq)
+
+# Read compressed file and decode it
+decompressed_file = huffman.decompress(compressed_file)
+print(f&quot;Decompressed file saved at {decompressed_file}&quot;)
